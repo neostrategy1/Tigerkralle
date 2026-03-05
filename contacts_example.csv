@@ -1,0 +1,4 @@
+id,name,phone,email,company,status,notes
+1,Max Mustermann,+4930123456,max.mustermann@beispiel.de,Beispiel GmbH,pending,
+2,Erika Musterfrau,+4989654321,e.musterfrau@firma.com,Musterfirma AG,pending,
+3,Hans Schmidt,+49711987654,h.schmidt@technik.de,Technik KG,pending,
