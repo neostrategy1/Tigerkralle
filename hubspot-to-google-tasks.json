@@ -1,0 +1,109 @@
+{
+  "name": "HubSpot Task → Google Tasks Sync",
+  "flow": [
+    {
+      "id": 1,
+      "module": "hubspot:watchCrmObjects",
+      "version": 2,
+      "parameters": {
+        "objectType": "TASK",
+        "limit": 10
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "objectType": { "label": "Task" }
+          }
+        },
+        "parameters": [
+          {
+            "name": "objectType",
+            "type": "select",
+            "label": "Object Type",
+            "required": true
+          },
+          {
+            "name": "limit",
+            "type": "number",
+            "label": "Limit",
+            "required": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "google-tasks:createTask",
+      "version": 1,
+      "parameters": {
+        "tasklistId": "@default"
+      },
+      "mapper": {
+        "title":   "{{1.properties.hs_task_subject}}",
+        "notes":   "{{1.properties.hs_task_body}}",
+        "due":     "{{formatDate(1.properties.hs_task_due_date; \"YYYY-MM-DD[T]HH:mm:ss[Z]\")}}",
+        "status":  "needsAction"
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {
+          "parameters": {
+            "tasklistId": { "label": "Meine Aufgaben (Standard)" }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tasklistId",
+            "type": "select",
+            "label": "Task List",
+            "required": true
+          }
+        ],
+        "expect": [
+          {
+            "name": "title",
+            "type": "text",
+            "label": "Titel",
+            "required": true
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "label": "Notizen"
+          },
+          {
+            "name": "due",
+            "type": "date",
+            "label": "Fälligkeitsdatum"
+          },
+          {
+            "name": "status",
+            "type": "select",
+            "label": "Status"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "instant":    false,
+    "version":    1,
+    "scenario": {
+      "roundtrips":          1,
+      "maxErrors":           3,
+      "autoCommit":          true,
+      "autoCommitTriggerLast": true,
+      "sequential":          false,
+      "confidential":        false,
+      "dataloss":            false,
+      "dlq":                 false,
+      "freshVariables":      false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com"
+  }
+}
