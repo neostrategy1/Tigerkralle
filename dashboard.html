@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HubSpot KPI Dashboard – Tigerkralle</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; color: #f8fafc; }
+    header span { font-size: 0.85rem; color: #64748b; }
+    .badge {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .kpi-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .kpi-card.green::before  { background: #22c55e; }
+    .kpi-card.blue::before   { background: #3b82f6; }
+    .kpi-card.orange::before { background: #f97316; }
+    .kpi-card.purple::before { background: #a855f7; }
+    .kpi-card.rose::before   { background: #f43f5e; }
+
+    .kpi-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .kpi-value { font-size: 2rem; font-weight: 700; color: #f8fafc; line-height: 1; }
+    .kpi-sub   { font-size: 0.78rem; color: #94a3b8; margin-top: 6px; }
+
+    /* Section titles */
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    /* Pipeline */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 700px) { .pipeline-grid { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .bar-label { font-size: 0.82rem; color: #94a3b8; width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; background: #0f1117; border-radius: 4px; height: 8px; }
+    .bar-fill   { height: 8px; border-radius: 4px; }
+    .bar-count { font-size: 0.82rem; color: #cbd5e1; width: 28px; text-align: right; }
+
+    /* Deal table */
+    .deal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.83rem;
+    }
+    .deal-table th {
+      text-align: left;
+      padding: 8px 12px;
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid #334155;
+    }
+    .deal-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+    }
+    .deal-table tr:last-child td { border-bottom: none; }
+    .deal-table tr:hover td { background: #0f1117; }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .pill-won    { background: #14532d; color: #4ade80; }
+    .pill-open   { background: #1e3a5f; color: #60a5fa; }
+    .pill-lost   { background: #450a0a; color: #f87171; }
+    .pill-nurture{ background: #3b1f6e; color: #c084fc; }
+
+    /* Win-rate donut */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 700px) { .metrics-row { grid-template-columns: 1fr; } }
+
+    .stat-list { list-style: none; }
+    .stat-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 0.85rem;
+    }
+    .stat-list li:last-child { border-bottom: none; }
+    .stat-list .key { color: #94a3b8; }
+    .stat-list .val { color: #f1f5f9; font-weight: 600; }
+
+    /* Probability indicator */
+    .prob-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #334155;
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>HubSpot KPI Dashboard</h1>
+    <div style="margin-top:4px; font-size:0.82rem; color:#475569;">Sascha Keck · neostrategy · Stand: 29. Juni 2026</div>
+  </div>
+  <span class="badge">Jahresansicht 2026</span>
+</header>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card green">
+    <div class="kpi-label">Won Revenue 2026</div>
+    <div class="kpi-value">€2.000</div>
+    <div class="kpi-sub">1 Deal mit Betrag erfasst</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-label">Gewonnene Deals</div>
+    <div class="kpi-value">2</div>
+    <div class="kpi-sub">von 5 abgeschlossenen</div>
+  </div>
+  <div class="kpi-card orange">
+    <div class="kpi-label">Offene Pipeline</div>
+    <div class="kpi-value">18</div>
+    <div class="kpi-sub">aktive Deals in Bearbeitung</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">Neue Kontakte 2026</div>
+    <div class="kpi-value">200+</div>
+    <div class="kpi-sub">Leads &amp; Opportunities</div>
+  </div>
+  <div class="kpi-card rose">
+    <div class="kpi-label">Win-Rate</div>
+    <div class="kpi-value">40%</div>
+    <div class="kpi-sub">2 gewonnen · 3 verloren</div>
+  </div>
+</div>
+
+<!-- Pipeline + Stats -->
+<div class="pipeline-grid">
+  <div class="panel">
+    <div class="section-title">Pipeline nach Stage</div>
+
+    <div class="bar-row">
+      <div class="bar-label">Erstkontakt / Interesse</div>
+      <div class="bar-track"><div class="bar-fill" style="width:100%;background:#3b82f6;"></div></div>
+      <div class="bar-count">6</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Qualifizierung</div>
+      <div class="bar-track"><div class="bar-fill" style="width:67%;background:#6366f1;"></div></div>
+      <div class="bar-count">4</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Präsentation / Angebot</div>
+      <div class="bar-track"><div class="bar-fill" style="width:50%;background:#a855f7;"></div></div>
+      <div class="bar-count">3</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Verhandlung</div>
+      <div class="bar-track"><div class="bar-fill" style="width:33%;background:#f97316;"></div></div>
+      <div class="bar-count">2</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Follow-up ausstehend</div>
+      <div class="bar-track"><div class="bar-fill" style="width:33%;background:#eab308;"></div></div>
+      <div class="bar-count">2</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Weitergeleitet / Partner</div>
+      <div class="bar-track"><div class="bar-fill" style="width:17%;background:#64748b;"></div></div>
+      <div class="bar-count">1</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Kennzahlen Übersicht</div>
+    <ul class="stat-list">
+      <li><span class="key">Deals gesamt 2026</span><span class="val">23</span></li>
+      <li><span class="key">Deals gewonnen</span><span class="val" style="color:#4ade80">2</span></li>
+      <li><span class="key">Deals verloren</span><span class="val" style="color:#f87171">3</span></li>
+      <li><span class="key">Deals offen</span><span class="val" style="color:#60a5fa">18</span></li>
+      <li><span class="key">Ø Wahrscheinlichkeit (Pipeline)</span><span class="val">~18%</span></li>
+      <li><span class="key">Earliest Close (offen)</span><span class="val">30. Mai 2026</span></li>
+      <li><span class="key">Nächster Abschluss fällig</span><span class="val">30. Jun 2026</span></li>
+      <li><span class="key">Aktive Kontakt-Lifecycles</span><span class="val">Lead, Opportunity</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- Deal Table -->
+<div class="panel" style="margin-bottom:32px;">
+  <div class="section-title">Aktive Deals – Pipeline</div>
+  <table class="deal-table">
+    <thead>
+      <tr>
+        <th>Deal</th>
+        <th>Stage</th>
+        <th>Close-Datum</th>
+        <th>Wahrscheinlichkeit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Workshop Termin – Martin Bartels</td>
+        <td><span class="pill pill-open">Angebot</span></td>
+        <td>30.06.2026</td>
+        <td><span class="prob-dot" style="background:#3b82f6;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>ALPSCALE – Vincent Dibon</td>
+        <td><span class="pill pill-open">Angebot</span></td>
+        <td>30.06.2026</td>
+        <td><span class="prob-dot" style="background:#3b82f6;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>GSL – Thomas Janetzki</td>
+        <td><span class="pill pill-open">Angebot</span></td>
+        <td>31.05.2026</td>
+        <td><span class="prob-dot" style="background:#3b82f6;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>AI – Defence</td>
+        <td><span class="pill pill-open">Angebot</span></td>
+        <td>31.05.2026</td>
+        <td><span class="prob-dot" style="background:#3b82f6;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>ProNovia – SAP Partner</td>
+        <td><span class="pill pill-open">Angebot</span></td>
+        <td>31.05.2026</td>
+        <td><span class="prob-dot" style="background:#3b82f6;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>IKARA Vision Systems</td>
+        <td><span class="pill pill-open">Angebot</span></td>
+        <td>–</td>
+        <td><span class="prob-dot" style="background:#3b82f6;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>Frau Kolbinger Call</td>
+        <td><span class="pill pill-nurture">Qualifizierung</span></td>
+        <td>31.05.2026</td>
+        <td><span class="prob-dot" style="background:#a855f7;"></span>10%</td>
+      </tr>
+      <tr>
+        <td>Unternehmenspräsentation senden</td>
+        <td><span class="pill pill-nurture">Qualifizierung</span></td>
+        <td>31.05.2026</td>
+        <td><span class="prob-dot" style="background:#a855f7;"></span>10%</td>
+      </tr>
+      <tr>
+        <td>NEXT Munich – Benjamin Broll</td>
+        <td><span class="pill pill-open">Verhandlung</span></td>
+        <td>30.04.2026</td>
+        <td><span class="prob-dot" style="background:#f97316;"></span>40%</td>
+      </tr>
+      <tr>
+        <td>mosaiic GmbH – Hermann Ferstl</td>
+        <td><span class="pill pill-open">Präsentation</span></td>
+        <td>30.04.2026</td>
+        <td><span class="prob-dot" style="background:#6366f1;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>byteleaf GmbH – Simon Ittmann</td>
+        <td><span class="pill pill-open">Präsentation</span></td>
+        <td>30.04.2026</td>
+        <td><span class="prob-dot" style="background:#6366f1;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>Breitenstein Consulting – Tim Bookas</td>
+        <td><span class="pill pill-nurture">Follow-up</span></td>
+        <td>31.03.2026</td>
+        <td><span class="prob-dot" style="background:#eab308;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>TELEflash GmbH</td>
+        <td><span class="pill pill-nurture">Follow-up</span></td>
+        <td>28.02.2026</td>
+        <td><span class="prob-dot" style="background:#eab308;"></span>20%</td>
+      </tr>
+      <tr>
+        <td>TVM Engineering Services</td>
+        <td><span class="pill pill-lost">Verloren</span></td>
+        <td>31.05.2026</td>
+        <td>–</td>
+      </tr>
+      <tr>
+        <td>IBK-Innovation GmbH</td>
+        <td><span class="pill pill-lost">Verloren</span></td>
+        <td>31.03.2026</td>
+        <td>–</td>
+      </tr>
+      <tr>
+        <td>Workshop – peter@aginity.ai</td>
+        <td><span class="pill pill-lost">Verloren</span></td>
+        <td>19.04.2026</td>
+        <td>–</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Won Deals -->
+<div class="panel" style="margin-bottom:32px;">
+  <div class="section-title">Gewonnene Deals 2026</div>
+  <table class="deal-table">
+    <thead>
+      <tr>
+        <th>Deal</th>
+        <th>Status</th>
+        <th>Close-Datum</th>
+        <th>Betrag</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Cash Control Sparring und Coaching</td>
+        <td><span class="pill pill-won">Gewonnen</span></td>
+        <td>20.03.2026</td>
+        <td style="color:#4ade80;font-weight:600;">€2.000</td>
+      </tr>
+      <tr>
+        <td>Sales Culture – Neues Objekt</td>
+        <td><span class="pill pill-won">Gewonnen</span></td>
+        <td>18.03.2026</td>
+        <td style="color:#94a3b8;">–</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  Daten aus HubSpot CRM · Account 147781501 · Automatisch generiert am 29.06.2026
+</footer>
+
+</body>
+</html>
